@@ -1,0 +1,11 @@
+# Local state can contain secrets (deployment token, connection strings, DATABASE_URL)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+
+# Variable files can contain secrets
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example

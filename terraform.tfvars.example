@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (git-ignored) and fill in. Every value is optional.
+
+# subscription_id = "00000000-0000-0000-0000-000000000000"   # or export ARM_SUBSCRIPTION_ID
+
+project_name = "edit30"
+environment  = "dev"
+location     = "westeurope"
+
+# static_web_app_sku = "Free"
+# app_service_sku    = "F1"     # "F1" is free (no Always On, daily CPU quota)
+
+# Let your own machine connect to the SQL server (e.g. to inspect data):
+# sql_client_ip_addresses = ["203.0.113.10"]
+
+# additional_cors_origins = ["http://localhost:3000"]
+# storage_containers      = ["uploads"]
