@@ -17,7 +17,8 @@ locals {
   )
 
   # ADO.NET-style string read by edit30backend (SQL_CONNECTION_STRING). The
-  # 60 s timeout gives a paused serverless database time to resume.
+  # 60 s timeout is a safety margin — normally unneeded now that auto-pause is
+  # disabled by default, but still covers a cold start if it's ever re-enabled.
   sql_connection_string = join(";", [
     "Server=tcp:${azurerm_mssql_server.main.fully_qualified_domain_name},1433",
     "Database=${azapi_resource.sql_database.name}",
@@ -107,9 +108,14 @@ resource "azurerm_linux_web_app" "backend" {
 # Database: Azure SQL Database, serverless, free offer
 #
 # The free offer gives 100,000 vCore-seconds and 32 GB of storage per month for
-# one database per subscription. With AutoPause the database pauses instead of
-# billing once the vCore-seconds run out; it also auto-pauses after an idle hour
-# and resumes on the first connection (the backend retries while that happens).
+# one database per subscription. Auto-pause is disabled (sql_auto_pause_delay_minutes
+# = -1 by default) so the database stays always-on instead of cold-starting on
+# the first request after being idle; sql_min_capacity raises the floor it runs
+# at while idle. Together these mean the free monthly allowance is used up in
+# about a day of continuous runtime, after which — since
+# sql_free_limit_exhaustion_behavior defaults to BillOverUsage, not AutoPause —
+# it keeps running and bills for the rest of the month rather than pausing
+# (which would undo the whole point of disabling auto-pause).
 # -----------------------------------------------------------------------------
 resource "random_password" "sql_admin" {
   length  = 32
@@ -146,8 +152,8 @@ resource "azapi_resource" "sql_database" {
     properties = {
       useFreeLimit                = true
       freeLimitExhaustionBehavior = var.sql_free_limit_exhaustion_behavior
-      autoPauseDelay              = 60
-      minCapacity                 = 0.5
+      autoPauseDelay              = var.sql_auto_pause_delay_minutes
+      minCapacity                 = var.sql_min_capacity
       maxSizeBytes                = 34359738368 # 32 GB, the free-offer limit
     }
   }

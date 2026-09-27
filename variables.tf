@@ -79,14 +79,26 @@ variable "sql_admin_login" {
 }
 
 variable "sql_free_limit_exhaustion_behavior" {
-  description = "What happens when the monthly free allowance (100,000 vCore-seconds) is used up: AutoPause (database pauses until next month, never billed) or BillOverUsage (keeps running and is billed)."
+  description = "What happens when the monthly free allowance (100,000 vCore-seconds) is used up: AutoPause (database pauses until next month, never billed) or BillOverUsage (keeps running and is billed). Defaults to BillOverUsage because sql_auto_pause_delay_minutes below disables idle auto-pause too — with AutoPause, the database would still pause once the free allowance ran out, undoing that."
   type        = string
-  default     = "AutoPause"
+  default     = "BillOverUsage"
 
   validation {
     condition     = contains(["AutoPause", "BillOverUsage"], var.sql_free_limit_exhaustion_behavior)
     error_message = "sql_free_limit_exhaustion_behavior must be AutoPause or BillOverUsage."
   }
+}
+
+variable "sql_min_capacity" {
+  description = "Minimum serverless vCores the database scales down to. Above the free tier's covered baseline, running time is billed at this rate whenever idle, so raising it trades a bit of always-on cost for never fully pausing."
+  type        = number
+  default     = 1
+}
+
+variable "sql_auto_pause_delay_minutes" {
+  description = "Idle minutes before the database auto-pauses (causing a slow cold-start on the next request), or -1 to disable auto-pause entirely and stay always-on."
+  type        = number
+  default     = -1
 }
 
 variable "sql_client_ip_addresses" {
